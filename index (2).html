@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LedgrAI — Intelligent Accounting for Indian Businesses</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e25;--bg4:#22272f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#f0ece4;--text2:#8a8f9a;--text3:#555a64;
+  --accent:#c8f064;--accent2:#a8d44e;--accent-dim:rgba(200,240,100,0.1);--accent-dim2:rgba(200,240,100,0.18);
+  --red:#ff6b6b;--red-dim:rgba(255,107,107,0.12);
+  --blue:#6eb5ff;--blue-dim:rgba(110,181,255,0.1);
+  --amber:#ffc96b;--amber-dim:rgba(255,201,107,0.1);
+  --green:#6bffb8;--green-dim:rgba(107,255,184,0.1);
+  --radius:10px;--radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden}
+
+/* API KEY MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:32px;max-width:480px;width:100%}
+.modal-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+.modal input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;font-size:13px;color:var(--text);outline:none;font-family:'DM Mono',monospace;margin-bottom:12px}
+.modal input:focus{border-color:rgba(200,240,100,0.4)}
+.modal-note{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:18px;padding:10px;background:var(--bg3);border-radius:8px;border-left:2px solid var(--accent)}
+.modal-footer{display:flex;gap:10px;align-items:center}
+.modal-link{font-size:12px;color:var(--blue);text-decoration:none;margin-left:auto}
+.modal-link:hover{text-decoration:underline}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+.logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);letter-spacing:-0.5px}
+.logo-sub{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
+.sidebar-section{padding:16px 12px 6px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:1px 8px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .18s;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent-dim2);border-color:rgba(200,240,100,0.25);color:var(--accent)}
+.nav-icon{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-footer{margin-top:auto;padding:14px}
+.model-chip{background:var(--accent-dim);border:1px solid rgba(200,240,100,0.2);border-radius:20px;padding:5px 10px;font-size:11px;color:var(--accent);display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.model-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite}
+.key-btn{width:100%;font-size:11px;padding:7px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;text-align:center}
+.key-btn:hover{background:var(--bg3);color:var(--text2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MAIN */
+.main{margin-left:220px;min-height:100vh;padding:28px 32px}
+.panel{display:none;animation:fadeIn .25s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{margin-bottom:24px}
+.page-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text2)}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.met{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.met-l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.met-v{font-size:22px;font-weight:600;color:var(--text);font-family:'DM Serif Display',serif}
+.met-v.g{color:var(--accent)}.met-v.r{color:var(--red)}
+
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.fg input,.fg select,.fg textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;width:100%;transition:border .15s;outline:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:rgba(200,240,100,0.4);background:var(--bg4)}
+.fg select option{background:var(--bg3)}
+.fg textarea{resize:vertical;min-height:90px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.6}
+.fr{display:grid;gap:12px;margin-bottom:12px}
+.fr.c2{grid-template-columns:1fr 1fr}
+.fr.c3{grid-template-columns:1fr 1fr 1fr}
+.fr.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+
+.btn{font-size:12px;font-weight:600;padding:9px 18px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;transition:all .18s;letter-spacing:.3px;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn:hover{background:var(--bg4)}
+.btn.pri{background:var(--accent);color:#0d0f12;border-color:var(--accent)}
+.btn.pri:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn.ghost{background:transparent;border-color:var(--border2);color:var(--text2)}
+.btn.ghost:hover{background:var(--bg3);color:var(--text)}
+.btn.danger{background:var(--red-dim);border-color:rgba(255,107,107,0.25);color:var(--red)}
+.btn.sm{font-size:11px;padding:6px 12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.out{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:12px;color:var(--text);line-height:1.8;white-space:pre-wrap;margin-top:14px;font-family:'DM Mono',monospace;display:none;max-height:520px;overflow-y:auto}
+.out.show{display:block}
+
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:10px 12px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,0.02)}
+
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.tag.inc{background:rgba(107,255,184,0.12);color:var(--green);border:1px solid rgba(107,255,184,0.2)}
+.tag.exp{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,107,107,0.2)}
+
+.info-box{background:var(--blue-dim);border:1px solid rgba(110,181,255,0.18);border-radius:var(--radius);padding:12px 15px;font-size:12px;color:var(--blue);line-height:1.7;margin-bottom:16px}
+.warn-box{background:var(--amber-dim);border:1px solid rgba(255,201,107,0.18);border-radius:var(--radius);padding:12px 15px;font-size:12px;color:var(--amber);line-height:1.7;margin-bottom:10px}
+.success-box{background:var(--green-dim);border:1px solid rgba(107,255,184,0.2);border-radius:var(--radius);padding:12px 15px;font-size:12px;color:var(--green);line-height:1.7;margin-top:12px}
+.error-box{background:var(--red-dim);border:1px solid rgba(255,107,107,0.2);border-radius:var(--radius);padding:12px 15px;font-size:12px;color:var(--red);line-height:1.7;margin-top:12px}
+
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px;background:var(--bg3)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:var(--accent-dim)}
+#file-input{display:none}
+.drop-icon{font-size:32px;margin-bottom:10px}
+.drop-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--text2)}
+.drop-sub span{color:var(--accent)}
+
+.sheet-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.stab{font-size:11px;padding:4px 12px;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;transition:all .15s}
+.stab.active{background:var(--accent-dim2);border-color:rgba(200,240,100,0.3);color:var(--accent)}
+
+.preview-wrap{overflow-x:auto;max-height:220px;overflow-y:auto;border-radius:var(--radius);border:1px solid var(--border)}
+.preview-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.preview-tbl th{background:var(--bg4);font-weight:600;font-size:10px;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;position:sticky;top:0;text-transform:uppercase;letter-spacing:.5px}
+.preview-tbl td{padding:5px 10px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);color:var(--text);white-space:nowrap;font-family:'DM Mono',monospace;font-size:11px}
+.preview-tbl tr:hover td{background:var(--bg4)}
+
+.map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.map-row label{width:140px;font-size:11px;color:var(--text3);flex-shrink:0;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.map-row select{flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--bg3);color:var(--text);outline:none}
+
+.chat-wrap{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow-y:auto;margin-bottom:14px;padding-right:4px}
+.cmsg{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.65;max-width:86%}
+.cmsg.agent{background:var(--bg3);border:1px solid var(--border);color:var(--text);align-self:flex-start}
+.cmsg.user{background:var(--accent-dim2);border:1px solid rgba(200,240,100,0.2);color:var(--accent);align-self:flex-end}
+.cinput{display:flex;gap:8px}
+.cinput input{flex:1;font-size:13px;padding:10px 14px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);color:var(--text);outline:none;font-family:'DM Sans',sans-serif}
+.cinput input:focus{border-color:rgba(200,240,100,0.4)}
+.quick-qs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(200,240,100,0.3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+@media(max-width:768px){
+  .sidebar{width:56px}
+  .sidebar-logo .logo-sub,.nav-item span,.sidebar-section,.key-btn-text{display:none}
+  .nav-item{justify-content:center;padding:10px}
+  .main{margin-left:56px;padding:16px}
+  .metrics{grid-template-columns:1fr 1fr}
+  .fr.c4{grid-template-columns:1fr 1fr}
+  .fr.c3{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="key-modal">
+  <div class="modal">
+    <div class="modal-title">Welcome to LedgrAI</div>
+    <div class="modal-sub">To activate all AI features — ledger analysis, invoice generation, P&L, balance sheet, bank reconciliation, GST/ITR, and the CA assistant — enter your Anthropic API key below.</div>
+    <input type="password" id="key-input" placeholder="sk-ant-api03-..." autocomplete="off" onkeydown="if(event.key==='Enter')saveKey()">
+    <div class="modal-note">Your key is stored only in your browser's local storage and never sent anywhere except directly to Anthropic's API. It is never logged or shared.</div>
+    <div class="modal-footer">
+      <button class="btn pri" onclick="saveKey()">Activate LedgrAI</button>
+      <a class="modal-link" href="https://console.anthropic.com/settings/keys" target="_blank">Get a free API key →</a>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">LedgrAI</div>
+    <div class="logo-sub">Powered by Claude</div>
+  </div>
+  <div class="sidebar-section">Accounting</div>
+  <div class="nav-item active" onclick="sw('dashboard',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+    <span>Dashboard</span>
+  </div>
+  <div class="nav-item" onclick="sw('excel',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="12" rx="2"/><path d="M5 2v12M1 6h14M1 10h14"/></svg>
+    <span>Excel Import</span>
+  </div>
+  <div class="nav-item" onclick="sw('invoice',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="2"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+    <span>Invoice Generator</span>
+  </div>
+  <div class="nav-item" onclick="sw('pl',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12L5 8l3 2 3-5 3 3"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+    <span>P&amp;L Statement</span>
+  </div>
+  <div class="nav-item" onclick="sw('bs',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v14M1 8h14"/><circle cx="8" cy="8" r="7"/></svg>
+    <span>Balance Sheet</span>
+  </div>
+  <div class="nav-item" onclick="sw('bank',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l7 4H1l7-4zM2 5v8M14 5v8M1 13h14"/></svg>
+    <span>Bank Analysis</span>
+  </div>
+  <div class="nav-item" onclick="sw('gst',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1L2 4v4c0 4 6 7 6 7s6-3 6-7V4z"/></svg>
+    <span>GST / ITR</span>
+  </div>
+  <div class="sidebar-section">Sales</div>
+  <div class="nav-item" onclick="sw('outreach',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2L2 7l5 2 2 5 5-12z"/></svg>
+    <span>Outreach Agent</span>
+  </div>
+  <div class="sidebar-section">Help</div>
+  <div class="nav-item" onclick="sw('ask',this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M6 6c0-1.1.9-2 2-2s2 .9 2 2c0 1-1 1.5-2 2v1"/><circle cx="8" cy="12.5" r=".5" fill="currentColor"/></svg>
+    <span>Ask CA / Agent</span>
+  </div>
+  <div class="sidebar-footer">
+    <div class="model-chip"><div class="model-dot"></div>Claude Sonnet 4.6</div>
+    <button class="key-btn" onclick="changeKey()">&#128273; <span class="key-btn-text">Change API Key</span></button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- DASHBOARD -->
+<div id="p-dashboard" class="panel active">
+  <div class="page-header">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Your live business ledger — add entries manually or import via Excel</div>
+  </div>
+  <div class="metrics">
+    <div class="met"><div class="met-l">Total Revenue</div><div class="met-v g" id="d-rev">₹0</div></div>
+    <div class="met"><div class="met-l">Total Expenses</div><div class="met-v r" id="d-exp">₹0</div></div>
+    <div class="met"><div class="met-l">Net Profit</div><div class="met-v" id="d-net">₹0</div></div>
+    <div class="met"><div class="met-l">Transactions</div><div class="met-v" id="d-cnt">0</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Add Transaction</div>
+    <div class="fr c4">
+      <div class="fg"><label>Date</label><input type="date" id="t-date"></div>
+      <div class="fg"><label>Type</label><select id="t-type"><option value="income">Income</option><option value="expense">Expense</option><option value="asset">Asset</option><option value="liability">Liability</option></select></div>
+      <div class="fg"><label>Amount (₹)</label><input type="number" id="t-amt" placeholder="0" min="0"></div>
+      <div class="fg"><label>Category</label><select id="t-cat">
+        <option>Sales revenue</option><option>Service income</option><option>Interest income</option><option>Other income</option>
+        <option>Cost of goods sold</option><option>Salaries &amp; wages</option><option>Office rent</option><option>Utilities</option>
+        <option>Marketing</option><option>Professional fees</option><option>Software</option><option>Travel</option>
+        <option>Depreciation</option><option>Bank charges</option><option>Taxes paid</option><option>Fixed assets</option><option>Misc</option>
+      </select></div>
+    </div>
+    <div class="fr c2">
+      <div class="fg"><label>Description</label><input type="text" id="t-desc" placeholder="e.g. Client payment — Project Alpha"></div>
+      <div class="fg"><label>Party Name</label><input type="text" id="t-party" placeholder="e.g. Reliance Industries"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn pri" onclick="addTxn()">Add Entry</button>
+      <button class="btn" onclick="aiCall('quickAI')">AI Analyse Ledger</button>
+      <button class="btn danger sm" onclick="clearAll()" style="margin-left:auto">Clear All</button>
+    </div>
+    <div id="d-out" class="out"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Ledger <span id="entry-count" style="font-size:10px;font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0"></span></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>#</th><th>Date</th><th>Description</th><th>Party</th><th>Category</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody id="txn-body"><tr><td colspan="7" style="color:var(--text3);padding:20px 12px;font-size:12px">No entries yet.</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- EXCEL IMPORT -->
+<div id="p-excel" class="panel">
+  <div class="page-header"><div class="page-title">Excel Import</div><div class="page-sub">Upload any .xlsx, .xls, or .csv file — all formats supported</div></div>
+  <div class="info-box">Drop your client's spreadsheet. The agent reads every sheet, previews data, auto-maps columns, then imports into the ledger — ready for P&L, Balance Sheet, GST filing and AI analysis.</div>
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
+    <div class="drop-icon">📊</div>
+    <div class="drop-title">Drop Excel / CSV here</div>
+    <div class="drop-sub">or <span>click to browse</span> &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .xls &nbsp;·&nbsp; .csv</div>
+  </div>
+  <div id="file-info" style="display:none">
+    <div class="card">
+      <div class="card-title" id="file-name-title">File Loaded</div>
+      <div style="margin-bottom:10px"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:8px">Sheets</div><div class="sheet-tabs" id="sheet-tabs"></div></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px" id="preview-label">Preview</div>
+      <div class="preview-wrap"><table class="preview-tbl" id="preview-tbl"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Map Columns to Ledger Fields</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Hit Auto-detect first — it recognises most common headers. Adjust manually if needed.</div>
+      <div id="col-map"></div>
+      <div class="btn-row">
+        <button class="btn pri" onclick="importData()">Import into Ledger</button>
+        <button class="btn" onclick="autoMap()">Auto-detect Columns</button>
+        <button class="btn ghost" onclick="aiCall('aiAnalyseFile')">AI Analyse File</button>
+      </div>
+      <div id="import-result"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Supported Formats</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;color:var(--text2);line-height:1.7">
+      <div><span style="color:var(--accent);font-weight:600">Bank statement export</span><br>Date, Description, Debit, Credit, Balance</div>
+      <div><span style="color:var(--accent);font-weight:600">Transaction ledger</span><br>Date, Type, Category, Amount, Description</div>
+      <div><span style="color:var(--accent);font-weight:600">Tally export</span><br>Voucher Date, Type, Ledger, Dr, Cr</div>
+      <div><span style="color:var(--accent);font-weight:600">Sales register</span><br>Invoice No, Date, Client, Amount, GST</div>
+    </div>
+  </div>
+</div>
+
+<!-- INVOICE -->
+<div id="p-invoice" class="panel">
+  <div class="page-header"><div class="page-title">Invoice Generator</div><div class="page-sub">GST-compliant tax invoices as per GST Invoice Rules 2017</div></div>
+  <div class="fr c2">
+    <div class="card">
+      <div class="card-title">Seller Details</div>
+      <div class="fg" style="margin-bottom:10px"><label>Business Name</label><input type="text" id="i-biz" placeholder="Sharma Tech Solutions Pvt Ltd"></div>
+      <div class="fg" style="margin-bottom:10px"><label>GSTIN</label><input type="text" id="i-gst" placeholder="27AABCS1234A1Z5"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Address</label><input type="text" id="i-addr" placeholder="Mumbai, Maharashtra"></div>
+      <div class="fg"><label>Email / Phone</label><input type="text" id="i-contact" placeholder="billing@co.com | +91 98765 43210"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Buyer Details</div>
+      <div class="fg" style="margin-bottom:10px"><label>Client Name</label><input type="text" id="i-client" placeholder="Reliance Industries Ltd"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Client GSTIN</label><input type="text" id="i-cgst" placeholder="27AAJCR1234A1Z5"></div>
+      <div class="fg"><label>Client Address</label><input type="text" id="i-caddr" placeholder="Nariman Point, Mumbai 400021"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Invoice Details &amp; Line Items</div>
+    <div class="fr c4">
+      <div class="fg"><label>Invoice No.</label><input type="text" id="i-num" placeholder="INV-2025-001"></div>
+      <div class="fg"><label>Invoice Date</label><input type="date" id="i-date"></div>
+      <div class="fg"><label>Due Date</label><input type="date" id="i-due"></div>
+      <div class="fg"><label>GST Rate</label><select id="i-grate"><option value="0">0% (Exempt)</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select></div>
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Line Items — Description | HSN/SAC | Qty | Unit | Rate (₹)</label>
+      <textarea id="i-items" placeholder="Web development | 998314 | 1 | Project | 150000&#10;Maintenance | 998313 | 3 | Month | 15000&#10;Domain & hosting | 998315 | 1 | Year | 8000"></textarea>
+    </div>
+    <div class="fr c2">
+      <div class="fg"><label>Supply Type</label><select id="i-supply"><option>Intra-state (CGST + SGST)</option><option>Inter-state (IGST)</option></select></div>
+      <div class="fg"><label>Bank Details</label><input type="text" id="i-bank" placeholder="A/C: 1234567890 | IFSC: HDFC0001234"></div>
+    </div>
+    <div class="fg" style="margin-top:10px"><label>Payment Terms</label><input type="text" id="i-terms" placeholder="Payment due within 30 days of invoice date"></div>
+    <div class="btn-row">
+      <button class="btn pri" onclick="aiCall('genInvoice')">Generate GST Invoice</button>
+      <button class="btn" onclick="aiCall('genProforma')">Proforma Invoice</button>
+    </div>
+  </div>
+  <div id="i-out" class="out"></div>
+</div>
+
+<!-- P&L -->
+<div id="p-pl" class="panel">
+  <div class="page-header"><div class="page-title">Profit &amp; Loss Statement</div><div class="page-sub">Formal P&L as per Indian Ind AS accounting standards</div></div>
+  <div class="card"><div class="card-title">Business &amp; Period</div>
+    <div class="fr c3">
+      <div class="fg"><label>Business Name</label><input type="text" id="pl-biz" placeholder="Sharma Tech Solutions Pvt Ltd"></div>
+      <div class="fg"><label>Period From</label><input type="date" id="pl-from"></div>
+      <div class="fg"><label>Period To</label><input type="date" id="pl-to"></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">Revenue (₹)</div>
+    <div class="fr c3">
+      <div class="fg"><label>Sales / Service Revenue</label><input type="number" id="pl-r1" placeholder="0" min="0"></div>
+      <div class="fg"><label>Other Operating Income</label><input type="number" id="pl-r2" placeholder="0" min="0"></div>
+      <div class="fg"><label>Non-operating Income</label><input type="number" id="pl-r3" placeholder="0" min="0"></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">Expenses (₹)</div>
+    <div class="fr c3">
+      <div class="fg"><label>Cost of Goods / Services</label><input type="number" id="pl-cogs" placeholder="0" min="0"></div>
+      <div class="fg"><label>Salaries &amp; Wages</label><input type="number" id="pl-sal" placeholder="0" min="0"></div>
+      <div class="fg"><label>Rent &amp; Utilities</label><input type="number" id="pl-rent" placeholder="0" min="0"></div>
+    </div>
+    <div class="fr c3" style="margin-top:10px">
+      <div class="fg"><label>Marketing &amp; Advertising</label><input type="number" id="pl-mkt" placeholder="0" min="0"></div>
+      <div class="fg"><label>Depreciation</label><input type="number" id="pl-dep" placeholder="0" min="0"></div>
+      <div class="fg"><label>Finance / Interest</label><input type="number" id="pl-fin" placeholder="0" min="0"></div>
+    </div>
+    <div class="fr c3" style="margin-top:10px">
+      <div class="fg"><label>Professional Fees</label><input type="number" id="pl-prof" placeholder="0" min="0"></div>
+      <div class="fg"><label>Other Expenses</label><input type="number" id="pl-oth" placeholder="0" min="0"></div>
+      <div class="fg"><label>Direct Taxes Paid</label><input type="number" id="pl-tax" placeholder="0" min="0"></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn pri" onclick="aiCall('genPL')">Generate P&amp;L Statement</button>
+    <button class="btn" onclick="aiCall('genPLLedger')">Auto-generate from Ledger</button>
+  </div>
+  <div id="pl-out" class="out"></div>
+</div>
+
+<!-- BALANCE SHEET -->
+<div id="p-bs" class="panel">
+  <div class="page-header"><div class="page-title">Balance Sheet</div><div class="page-sub">Indian Companies Act / Ind AS — auto-validates Assets = Liabilities + Equity</div></div>
+  <div class="card"><div class="card-title">Business</div>
+    <div class="fr c2">
+      <div class="fg"><label>Business Name</label><input type="text" id="bs-biz" placeholder="Sharma Tech Solutions Pvt Ltd"></div>
+      <div class="fg"><label>Balance Sheet Date</label><input type="date" id="bs-date"></div>
+    </div>
+  </div>
+  <div class="fr c2">
+    <div class="card"><div class="card-title">Assets (₹)</div>
+      <div class="fg" style="margin-bottom:10px"><label>Cash &amp; Bank Balance</label><input type="number" id="bs-cash" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Accounts Receivable</label><input type="number" id="bs-ar" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Inventory / Stock</label><input type="number" id="bs-inv" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Fixed Assets (Gross)</label><input type="number" id="bs-fa" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Less: Accumulated Depreciation</label><input type="number" id="bs-fadep" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg"><label>Other Current Assets</label><input type="number" id="bs-oca" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3)">Total Assets</span>
+        <span id="bs-total-assets" style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Serif Display',serif">₹0</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Liabilities &amp; Equity (₹)</div>
+      <div class="fg" style="margin-bottom:10px"><label>Accounts Payable</label><input type="number" id="bs-ap" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Short-term Loans</label><input type="number" id="bs-stl" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Long-term Loans</label><input type="number" id="bs-ltl" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>GST / Tax Payable</label><input type="number" id="bs-taxp" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg" style="margin-bottom:10px"><label>Owner's Capital / Equity</label><input type="number" id="bs-eq" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div class="fg"><label>Retained Earnings</label><input type="number" id="bs-re" placeholder="0" min="0" oninput="calcBS()"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3)">Total L + E</span>
+        <span id="bs-total-le" style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Serif Display',serif">₹0</span>
+      </div>
+    </div>
+  </div>
+  <div id="bs-check"></div>
+  <div class="btn-row"><button class="btn pri" onclick="aiCall('genBS')">Generate Balance Sheet</button></div>
+  <div id="bs-out" class="out"></div>
+</div>
+
+<!-- BANK ANALYSIS -->
+<div id="p-bank" class="panel">
+  <div class="page-header"><div class="page-title">Bank Statement Analysis</div><div class="page-sub">AI parses, categorises, reconciles and rectifies any bank statement</div></div>
+  <div class="info-box">Paste raw text from your bank statement (copy from PDF, internet banking, or Excel export). Claude will parse every line, flag duplicates and anomalies, reconcile the closing balance, and generate rectification journal entries.</div>
+  <div class="card"><div class="card-title">Statement Details</div>
+    <div class="fr c3">
+      <div class="fg"><label>Bank &amp; Account</label><input type="text" id="bk-name" placeholder="HDFC Bank — A/C 1234567890"></div>
+      <div class="fg"><label>Period</label><input type="text" id="bk-period" placeholder="April 2024 – March 2025"></div>
+      <div class="fg"><label>Opening Balance (₹)</label><input type="number" id="bk-open" placeholder="0" min="0"></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px;margin-top:4px">
+      <label>Paste Raw Bank Statement</label>
+      <textarea id="bk-data" style="min-height:140px" placeholder="01/04/2024  NEFT-RELIANCE-Invoice     CR  150000  650000&#10;03/04/2024  UPI-SWIGGY-FOOD            DR  1200    648800&#10;05/04/2024  SALARY TRANSFER            DR  85000   563800&#10;15/04/2024  INTEREST CREDIT            CR  2340    514940&#10;15/04/2024  INTEREST CREDIT            CR  2340    514940&#10;28/04/2024  GST PAYMENT                DR  18000   496940"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn pri" onclick="aiCall('analyseBank')">Analyse &amp; Rectify Statement</button>
+      <button class="btn" onclick="aiCall('reconcileOnly')">Reconciliation Report Only</button>
+    </div>
+  </div>
+  <div id="bk-out" class="out"></div>
+</div>
+
+<!-- GST / ITR -->
+<div id="p-gst" class="panel">
+  <div class="page-header"><div class="page-title">GST Returns &amp; ITR Filing</div><div class="page-sub">Generate GSTR-1 / GSTR-3B / ITR schedules + step-by-step portal guide</div></div>
+  <div class="info-box">Generates complete return data. Download the output → log into gst.gov.in or incometax.gov.in → upload. The agent does 95% of the work; you do the 2-minute OTP upload.</div>
+  <div class="card"><div class="card-title">Business &amp; Return</div>
+    <div class="fr c3">
+      <div class="fg"><label>Business Name</label><input type="text" id="g-biz" placeholder="Sharma Tech Pvt Ltd"></div>
+      <div class="fg"><label>GSTIN</label><input type="text" id="g-gst" placeholder="27AABCS1234A1Z5"></div>
+      <div class="fg"><label>PAN</label><input type="text" id="g-pan" placeholder="AABCS1234A"></div>
+    </div>
+    <div class="fr c3">
+      <div class="fg"><label>Return Type</label><select id="g-rtype"><option>GSTR-1 (Outward Supplies)</option><option>GSTR-3B (Monthly Summary)</option><option>ITR-3 (Business Income)</option><option>ITR-4 (Presumptive — 44AD)</option></select></div>
+      <div class="fg"><label>Period</label><input type="text" id="g-period" placeholder="Q4 FY 2024-25 / AY 2025-26"></div>
+      <div class="fg"><label>Business Type</label><select id="g-btype"><option>Pvt Ltd Company</option><option>Sole Proprietorship</option><option>Partnership Firm</option><option>LLP</option><option>OPC</option></select></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">Financials (₹)</div>
+    <div class="fr c3">
+      <div class="fg"><label>Taxable Turnover</label><input type="number" id="g-turn" placeholder="0" min="0"></div>
+      <div class="fg"><label>Output GST Collected</label><input type="number" id="g-out" placeholder="0" min="0"></div>
+      <div class="fg"><label>ITC (GST on Purchases)</label><input type="number" id="g-itc" placeholder="0" min="0"></div>
+    </div>
+    <div class="fr c3" style="margin-top:10px">
+      <div class="fg"><label>Net Taxable Income</label><input type="number" id="g-inc" placeholder="0" min="0"></div>
+      <div class="fg"><label>TDS Deducted</label><input type="number" id="g-tds" placeholder="0" min="0"></div>
+      <div class="fg"><label>Advance Tax Paid</label><input type="number" id="g-adv" placeholder="0" min="0"></div>
+    </div>
+    <div class="fg" style="margin-top:10px"><label>Deductions (80C, 80D, 44AD, etc.)</label><input type="text" id="g-ded" placeholder="80C: ₹1,50,000 | 80D: ₹25,000 | Section 44AD opted"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn pri" onclick="aiCall('genGST')">Generate Return + Filing Guide</button>
+    <button class="btn" onclick="aiCall('genITR')">Generate ITR Schedule</button>
+  </div>
+  <div id="g-out" class="out"></div>
+</div>
+
+<!-- OUTREACH -->
+<div id="p-outreach" class="panel">
+  <div class="page-header"><div class="page-title">Real Estate Outreach Agent</div><div class="page-sub">Alex — AI cold outreach specialist. Generates personalised messages and handles replies.</div></div>
+  <div class="card"><div class="card-title">Lead Profile</div>
+    <div class="fr c4">
+      <div class="fg"><label>Lead Name</label><input type="text" id="o-name" placeholder="Rahul Sharma"></div>
+      <div class="fg"><label>Lead Type</label><select id="o-type"><option value="buyer">Buyer</option><option value="seller">Seller</option><option value="investor">Investor</option><option value="renter">Renter</option></select></div>
+      <div class="fg"><label>Location</label><input type="text" id="o-loc" placeholder="South Bangalore"></div>
+      <div class="fg"><label>Budget Range</label><input type="text" id="o-budget" placeholder="₹60L – ₹80L"></div>
+    </div>
+    <div class="fr c3">
+      <div class="fg"><label>Property Interest</label><select id="o-prop"><option>Apartment</option><option>Villa</option><option>Commercial</option><option>Plot</option><option>Any</option></select></div>
+      <div class="fg"><label>Source</label><select id="o-source"><option>Cold list</option><option>Referral</option><option>Website enquiry</option><option>Ad / Social media</option></select></div>
+      <div class="fg"><label>Previous Contact</label><select id="o-prev"><option value="no">No — first contact</option><option value="yes">Yes — follow-up</option></select></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label>Additional Notes</label><input type="text" id="o-notes" placeholder="e.g. IT professional, looking to invest within 3 months, seen our ads"></div>
+    <div class="btn-row"><button class="btn pri" onclick="aiCall('genOutreach')">Generate Opening Message</button></div>
+  </div>
+  <div class="card" id="o-reply-card" style="display:none">
+    <div class="card-title">Handle Lead's Reply</div>
+    <div class="fg" style="margin-bottom:10px"><label>Paste the lead's reply</label><textarea id="o-reply" placeholder="Paste exactly what the lead said..."></textarea></div>
+    <div class="btn-row"><button class="btn pri" onclick="aiCall('handleReply')">Generate Follow-up Response</button></div>
+  </div>
+  <div id="o-out" class="out"></div>
+</div>
+
+<!-- ASK CA -->
+<div id="p-ask" class="panel">
+  <div class="page-header"><div class="page-title">Ask Your AI CA</div><div class="page-sub">Claude Sonnet 4.6 — expert in Indian accounting, GST, ITR, TDS &amp; compliance</div></div>
+  <div class="card">
+    <div class="chat-wrap" id="chat-wrap">
+      <div class="cmsg agent">Namaskar! I am your AI Chartered Accountant, powered by Claude Sonnet 4.6. I specialise in Indian small business accounting — GST, ITR filing, TDS, bookkeeping, bank reconciliation, Ind AS standards, and ROC compliance. What would you like help with today?</div>
+    </div>
+    <div class="cinput">
+      <input type="text" id="c-in" placeholder="e.g. What GST rate applies to software services? What is Section 44AD?" onkeydown="if(event.key==='Enter')aiCall('chat')">
+      <button class="btn pri" onclick="aiCall('chat')">Ask</button>
+    </div>
+    <div class="quick-qs">
+      <button class="btn sm ghost" onclick="qc('What is the difference between GSTR-1 and GSTR-3B?')">GSTR-1 vs GSTR-3B</button>
+      <button class="btn sm ghost" onclick="qc('Am I eligible for Section 44AD if my turnover is ₹80 lakhs?')">Section 44AD</button>
+      <button class="btn sm ghost" onclick="qc('What business expenses can I claim as deductions?')">Tax deductions</button>
+      <button class="btn sm ghost" onclick="qc('Journal entry for GST on ₹1 lakh invoice at 18%?')">GST journal entry</button>
+      <button class="btn sm ghost" onclick="qc('ITR filing deadline for a private limited company AY 2025-26?')">ITR deadline</button>
+      <button class="btn sm ghost" onclick="qc('How is depreciation calculated under Income Tax Act for computers?')">IT Act depreciation</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════
+// API KEY MANAGEMENT — fixes the CORS issue
+// ═══════════════════════════════════════════════
+const MDL = 'claude-sonnet-4-6';
+let API_KEY = '';
+let txns = [], chatHist = [], outreachHist = [];
+let workbook = null, sheets = {}, currentSheet = '', headers = [];
+
+function loadKey() {
+  API_KEY = localStorage.getItem('ledgrai_key') || '';
+  if (API_KEY) {
+    document.getElementById('key-modal').style.display = 'none';
+  } else {
+    document.getElementById('key-modal').style.display = 'flex';
+  }
+}
+
+function saveKey() {
+  const k = document.getElementById('key-input').value.trim();
+  if (!k || !k.startsWith('sk-ant')) {
+    alert('Please enter a valid Anthropic API key starting with sk-ant...');
+    return;
+  }
+  API_KEY = k;
+  localStorage.setItem('ledgrai_key', k);
+  document.getElementById('key-modal').style.display = 'none';
+}
+
+function changeKey() {
+  document.getElementById('key-input').value = '';
+  document.getElementById('key-modal').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════
+// CORE API CALL — direct to Anthropic with user's key
+// ═══════════════════════════════════════════════
+async function callClaude(system, userMsg, history) {
+  if (!API_KEY) { loadKey(); throw new Error('No API key'); }
+  const messages = history
+    ? [...history, { role: 'user', content: userMsg }]
+    : [{ role: 'user', content: userMsg }];
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-allow-browser': 'true'
+    },
+    body: JSON.stringify({ model: MDL, max_tokens: 1500, system, messages })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    if (resp.status === 401) {
+      localStorage.removeItem('ledgrai_key');
+      API_KEY = '';
+      document.getElementById('key-modal').style.display = 'flex';
+      throw new Error('Invalid API key — please re-enter your key.');
+    }
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.content?.[0]?.text || '';
+}
+
+// ═══════════════════════════════════════════════
+// UNIFIED AI DISPATCHER
+// ═══════════════════════════════════════════════
+async function aiCall(fn) {
+  if (!API_KEY) { loadKey(); return; }
+  try { await handlers[fn](); }
+  catch (e) { console.error(e); }
+}
+
+function showLoading(outId, msg) {
+  const el = document.getElementById(outId);
+  el.innerHTML = '<span class="spinner"></span>' + msg;
+  el.classList.add('show');
+  return el;
+}
+
+function showResult(outId, text) {
+  const el = document.getElementById(outId);
+  el.textContent = text;
+  el.classList.add('show');
+}
+
+function showError(outId, msg) {
+  const el = document.getElementById(outId);
+  el.innerHTML = '<span style="color:var(--red)">Error: ' + msg + '</span>\n\nIf this persists, check your API key in Settings (bottom of sidebar).';
+  el.classList.add('show');
+}
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+function sw(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('p-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+const fmt = n => '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN');
+const gv = id => parseFloat(document.getElementById(id).value) || 0;
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function addTxn() {
+  const amt = parseFloat(document.getElementById('t-amt').value) || 0;
+  if (!amt || amt <= 0) { alert('Enter a valid amount greater than 0.'); return; }
+  txns.push({
+    date: document.getElementById('t-date').value || new Date().toISOString().split('T')[0],
+    type: document.getElementById('t-type').value,
+    amt,
+    cat: document.getElementById('t-cat').value,
+    desc: document.getElementById('t-desc').value || 'Entry',
+    party: document.getElementById('t-party').value
+  });
+  ['t-amt', 't-desc', 't-party'].forEach(id => document.getElementById(id).value = '');
+  updDash();
+}
+
+function clearAll() {
+  if (!txns.length) return;
+  if (confirm('Clear all ' + txns.length + ' transactions?')) { txns = []; updDash(); }
+}
+
+function updDash() {
+  const inc = txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amt, 0);
+  const exp = txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amt, 0);
+  const net = inc - exp;
+  document.getElementById('d-rev').textContent = fmt(inc);
+  document.getElementById('d-exp').textContent = fmt(exp);
+  document.getElementById('d-net').textContent = (net < 0 ? '-' : '') + fmt(net);
+  document.getElementById('d-net').className = 'met-v ' + (net >= 0 ? 'g' : 'r');
+  document.getElementById('d-cnt').textContent = txns.length;
+  document.getElementById('entry-count').textContent = txns.length ? '(' + txns.length + ' entries)' : '';
+  const tb = document.getElementById('txn-body');
+  if (!txns.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="color:var(--text3);padding:20px 12px;font-size:12px">No entries yet.</td></tr>';
+    return;
+  }
+  tb.innerHTML = txns.slice().reverse().slice(0, 100).map((t, i) => `
+    <tr>
+      <td style="color:var(--text3);font-family:DM Mono,monospace;font-size:11px">${txns.length - i}</td>
+      <td style="font-family:DM Mono,monospace;font-size:11px">${t.date}</td>
+      <td>${t.desc}</td>
+      <td style="color:var(--text2)">${t.party || '—'}</td>
+      <td style="color:var(--text3)">${t.cat}</td>
+      <td><span class="tag ${t.type === 'income' ? 'inc' : 'exp'}">${t.type}</span></td>
+      <td style="text-align:right;font-weight:600;font-family:DM Mono,monospace;color:${t.type === 'income' ? 'var(--green)' : 'var(--red)'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amt)}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// EXCEL IMPORT
+// ═══════════════════════════════════════════════
+function dragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag'); }
+function dragLeave() { document.getElementById('drop-zone').classList.remove('drag'); }
+function dropFile(e) { e.preventDefault(); dragLeave(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      sheets = {};
+      workbook.SheetNames.forEach(n => {
+        sheets[n] = XLSX.utils.sheet_to_json(workbook.Sheets[n], { header: 1, defval: '', raw: false });
+      });
+      currentSheet = workbook.SheetNames[0];
+      document.getElementById('file-info').style.display = 'block';
+      document.getElementById('file-name-title').textContent = file.name + ' — ' + Math.round(file.size / 1024) + ' KB, ' + workbook.SheetNames.length + ' sheet(s)';
+      renderSheetTabs(); renderPreview(currentSheet); renderColumnMap();
+    } catch (e) { alert('Could not read file. Ensure it is a valid .xlsx, .xls or .csv file.'); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderSheetTabs() {
+  document.getElementById('sheet-tabs').innerHTML = workbook.SheetNames.map((n, i) =>
+    `<button class="stab ${i === 0 ? 'active' : ''}" onclick="selectSheet('${n}',this)">${n}</button>`).join('');
+}
+
+function selectSheet(name, btn) {
+  currentSheet = name;
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPreview(name); renderColumnMap();
+}
+
+function renderPreview(sn) {
+  const rows = sheets[sn] || [];
+  document.getElementById('preview-label').textContent = `Preview — ${sn} (${rows.length} rows, first 8 shown)`;
+  if (!rows.length) { document.getElementById('preview-tbl').innerHTML = '<tr><td style="padding:12px;color:var(--text3)">Empty sheet.</td></tr>'; return; }
+  headers = rows[0].map((h, i) => h !== '' ? String(h) : 'Col' + (i + 1));
+  let html = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+  rows.slice(1, 9).forEach(r => { html += `<tr>${headers.map((_, i) => `<td>${r[i] !== undefined ? r[i] : ''}</td>`).join('')}</tr>`; });
+  document.getElementById('preview-tbl').innerHTML = html + '</tbody>';
+}
+
+function renderColumnMap() {
+  const fields = [
+    { key: 'date', label: 'Date' }, { key: 'desc', label: 'Description' },
+    { key: 'amount', label: 'Amount (single col)' }, { key: 'type', label: 'Type (Dr/Cr col)' },
+    { key: 'debit', label: 'Debit amount' }, { key: 'credit', label: 'Credit amount' },
+    { key: 'category', label: 'Category' }, { key: 'party', label: 'Party name' },
+    { key: 'balance', label: 'Running balance' }
+  ];
+  const opts = ['<option value="">— Skip —</option>', ...headers.map((h, i) => `<option value="${i}">${h}</option>`)].join('');
+  document.getElementById('col-map').innerHTML = fields.map(f =>
+    `<div class="map-row"><label>${f.label}</label><select id="map-${f.key}">${opts}</select></div>`).join('');
+  autoMap();
+}
+
+function autoMap() {
+  const m = { date: ['date','dt','trans date','transaction date','value date','posting date'], desc: ['description','narration','particular','details','remarks','memo'], amount: ['amount','amt','value','net amount'], type: ['type','txn type','dr/cr','dr cr'], debit: ['debit','dr','withdrawal','debit amount'], credit: ['credit','cr','deposit','credit amount'], category: ['category','head','ledger','account head'], party: ['party','name','client','vendor','payee','beneficiary'], balance: ['balance','closing balance','running balance'] };
+  Object.keys(m).forEach(key => { const el = document.getElementById('map-' + key); if (!el) return; const i = headers.findIndex(h => m[key].some(k => h.toLowerCase().includes(k))); if (i >= 0) el.value = i; });
+}
+
+function gc(key) { const el = document.getElementById('map-' + key); return el && el.value !== '' ? parseInt(el.value) : null; }
+
+function importData() {
+  const rows = sheets[currentSheet] || [];
+  if (rows.length < 2) { alert('No data rows found.'); return; }
+  const dRows = rows.slice(1).filter(r => r.some(c => c !== '' && c !== null));
+  let ok = 0, skip = 0;
+  const dateCol = gc('date'), amtCol = gc('amount'), debitCol = gc('debit'), creditCol = gc('credit'), descCol = gc('desc'), typeCol = gc('type'), catCol = gc('category'), partyCol = gc('party');
+
+  dRows.forEach((row, i) => {
+    try {
+      const rawDate = dateCol !== null ? String(row[dateCol] || '').trim() : '';
+      const descVal = descCol !== null ? String(row[descCol] || '').trim() : 'Row ' + (i + 2);
+      const catVal = catCol !== null ? String(row[catCol] || '').trim() : 'Imported';
+      const partyVal = partyCol !== null ? String(row[partyCol] || '').trim() : '';
+      let amount = 0, txnType = 'expense';
+      if (amtCol !== null) {
+        amount = Math.abs(parseFloat(String(row[amtCol] || '').replace(/[,₹\s]/g, '')) || 0);
+        if (typeCol !== null) { const t = String(row[typeCol] || '').toLowerCase(); txnType = (t.includes('cr') || t.includes('credit') || t.includes('income') || t.includes('deposit')) ? 'income' : 'expense'; }
+      } else if (creditCol !== null || debitCol !== null) {
+        const cr = creditCol !== null ? Math.abs(parseFloat(String(row[creditCol] || '').replace(/[,₹\s]/g, '')) || 0) : 0;
+        const dr = debitCol !== null ? Math.abs(parseFloat(String(row[debitCol] || '').replace(/[,₹\s]/g, '')) || 0) : 0;
+        if (cr > 0) { amount = cr; txnType = 'income'; } else if (dr > 0) { amount = dr; txnType = 'expense'; } else { skip++; return; }
+      } else { skip++; return; }
+      if (!amount || amount <= 0) { skip++; return; }
+      txns.push({ date: rawDate || new Date().toISOString().split('T')[0], type: txnType, amt: amount, desc: descVal || 'Imported', cat: catVal || 'Imported', party: partyVal });
+      ok++;
+    } catch (e) { skip++; }
+  });
+  updDash();
+  const r = document.getElementById('import-result');
+  r.innerHTML = ok > 0
+    ? `<div class="success-box">Imported <strong style="font-weight:700">${ok} transactions</strong> into your ledger.${skip > 0 ? ' ' + skip + ' rows skipped.' : ''} Go to the Dashboard tab to view and analyse.</div>`
+    : `<div class="error-box">No transactions imported. Check your column mapping — ensure Date and Amount (or Debit/Credit) are mapped correctly.</div>`;
+}
+
+// ═══════════════════════════════════════════════
+// BALANCE SHEET LIVE CALC
+// ═══════════════════════════════════════════════
+function calcBS() {
+  const cash = gv('bs-cash'), ar = gv('bs-ar'), inv = gv('bs-inv'), fa = gv('bs-fa'), fadep = gv('bs-fadep'), oca = gv('bs-oca');
+  const ap = gv('bs-ap'), stl = gv('bs-stl'), ltl = gv('bs-ltl'), taxp = gv('bs-taxp'), eq = gv('bs-eq'), re = gv('bs-re');
+  const ta = cash + ar + inv + Math.max(0, fa - fadep) + oca;
+  const tl = ap + stl + ltl + taxp + eq + re;
+  document.getElementById('bs-total-assets').textContent = fmt(ta);
+  document.getElementById('bs-total-le').textContent = fmt(tl);
+  const diff = Math.abs(ta - tl);
+  const el = document.getElementById('bs-check');
+  if (ta === 0 && tl === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = diff < 1
+    ? `<div class="success-box">Balance check passed — Assets (${fmt(ta)}) = Liabilities + Equity (${fmt(tl)})</div>`
+    : `<div class="warn-box">Balance check: Assets (${fmt(ta)}) vs L+E (${fmt(tl)}) — Difference of ${fmt(diff)}. Generate the sheet to get AI rectification suggestion.</div>`;
+}
+
+// ═══════════════════════════════════════════════
+// ALL AI HANDLERS
+// ═══════════════════════════════════════════════
+const handlers = {
+
+  async quickAI() {
+    if (!txns.length) { alert('Add some transactions first.'); return; }
+    const inc = txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amt, 0);
+    const exp = txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amt, 0);
+    showLoading('d-out', 'Analysing your ledger with Claude Sonnet 4.6...');
+    try {
+      const rows = txns.map(t => `${t.date}|${t.type.toUpperCase()}|${t.cat}|₹${t.amt}|${t.desc}|${t.party || ''}`).join('\n');
+      const text = await callClaude(
+        'You are a senior Indian Chartered Accountant. Analyse these business transactions and provide: 1) P&L summary with key numbers 2) Category-wise breakdown 3) GST and TDS implications 4) Tax planning tips 5) Three specific actionable recommendations. Use Indian accounting standards.',
+        `Transactions:\n${rows}\n\nTotal Income: ${fmt(inc)}\nTotal Expenses: ${fmt(exp)}\nNet: ${fmt(inc - exp)}`
+      );
+      showResult('d-out', text);
+    } catch (e) { showError('d-out', e.message); }
+  },
+
+  async aiAnalyseFile() {
+    const rows = sheets[currentSheet] || [];
+    if (!rows.length) { alert('No file loaded.'); return; }
+    const preview = rows.slice(0, 25).map(r => r.join(' | ')).join('\n');
+    document.getElementById('import-result').innerHTML = `<div class="out show"><span class="spinner"></span>AI analysing file...</div>`;
+    try {
+      const text = await callClaude(
+        'You are a senior Indian CA. Analyse this raw Excel/accounting data: 1) Identify file type 2) Summarise contents 3) Flag errors/duplicates/anomalies 4) Key financial insights 5) Recommend how to use for accounting and tax filing.',
+        `Sheet: ${currentSheet}\nData:\n${preview}`
+      );
+      document.getElementById('import-result').innerHTML = `<div class="out show">${text.replace(/</g,'&lt;')}</div>`;
+    } catch (e) { document.getElementById('import-result').innerHTML = `<div class="error-box">${e.message}</div>`; }
+  },
+
+  async genInvoice() {
+    const items = document.getElementById('i-items').value.trim();
+    if (!items) { alert('Add at least one line item.'); return; }
+    const grate = parseInt(document.getElementById('i-grate').value) || 0;
+    const supply = document.getElementById('i-supply').value;
+    let taxableTotal = 0;
+    items.split('\n').filter(l => l.trim()).forEach(line => {
+      const p = line.split('|').map(x => x.trim());
+      if (p.length >= 5) taxableTotal += (parseFloat(p[2]) || 1) * (parseFloat(p[4]) || 0);
+    });
+    const gstAmt = Math.round(taxableTotal * grate / 100);
+    const grandTotal = taxableTotal + gstAmt;
+    showLoading('i-out', 'Generating GST invoice with Claude Sonnet 4.6...');
+    try {
+      const text = await callClaude(
+        `You are an expert Indian CA. Generate a complete, properly formatted GST Tax Invoice following GST Invoice Rules 2017. Include: TAX INVOICE header, all mandatory fields (place of supply, reverse charge, HSN/SAC codes), itemised table with ${supply.includes('Intra') ? 'CGST @' + (grate/2) + '%, SGST @' + (grate/2) + '%' : 'IGST @' + grate + '%'}, subtotal, GST amounts, grand total, total in words (Indian system — lakhs/crores), payment terms, bank details, authorised signatory section. Use the pre-calculated totals exactly as provided.`,
+        `SELLER: ${document.getElementById('i-biz').value || 'Business'} | GSTIN: ${document.getElementById('i-gst').value || 'Unregistered'} | ${document.getElementById('i-addr').value} | ${document.getElementById('i-contact').value}\nBUYER: ${document.getElementById('i-client').value || 'Client'} | GSTIN: ${document.getElementById('i-cgst').value || 'N/A'} | ${document.getElementById('i-caddr').value}\nINVOICE: ${document.getElementById('i-num').value || 'INV-001'} | Date: ${document.getElementById('i-date').value} | Due: ${document.getElementById('i-due').value}\nGST: ${grate}% | Supply: ${supply} | Bank: ${document.getElementById('i-bank').value} | Terms: ${document.getElementById('i-terms').value || 'Net 30'}\nPRE-CALCULATED: Taxable=₹${taxableTotal.toLocaleString('en-IN')} | GST=₹${gstAmt.toLocaleString('en-IN')} | Grand Total=₹${grandTotal.toLocaleString('en-IN')}\nLINE ITEMS:\n${items}`
+      );
+      showResult('i-out', text);
+    } catch (e) { showError('i-out', e.message); }
+  },
+
+  async genProforma() {
+    showLoading('i-out', 'Generating proforma invoice...');
+    try {
+      const text = await callClaude(
+        'Generate a Proforma Invoice clearly marked "PROFORMA INVOICE — NOT A VALID GST DOCUMENT". Include line items, GST breakup, totals, and a note that a proper tax invoice will follow on payment.',
+        `Business: ${document.getElementById('i-biz').value || 'Business'} | Client: ${document.getElementById('i-client').value || 'Client'} | Items:\n${document.getElementById('i-items').value || 'Services | 998314 | 1 | Unit | 10000'} | GST: ${document.getElementById('i-grate').value}%`
+      );
+      showResult('i-out', text);
+    } catch (e) { showError('i-out', e.message); }
+  },
+
+  async genPL() {
+    const r1 = gv('pl-r1'), r2 = gv('pl-r2'), r3 = gv('pl-r3');
+    const cogs = gv('pl-cogs'), sal = gv('pl-sal'), rent = gv('pl-rent');
+    const mkt = gv('pl-mkt'), dep = gv('pl-dep'), fin = gv('pl-fin');
+    const prof = gv('pl-prof'), oth = gv('pl-oth'), tax = gv('pl-tax');
+    const totalRev = r1 + r2 + r3;
+    const grossProfit = totalRev - cogs;
+    const opEx = sal + rent + mkt + prof + oth;
+    const ebitda = grossProfit - opEx;
+    const ebit = ebitda - dep;
+    const pbt = ebit - fin;
+    const pat = pbt - tax;
+    showLoading('pl-out', 'Generating P&L Statement with Claude Sonnet 4.6...');
+    try {
+      const text = await callClaude(
+        'You are a senior Indian CA. Generate a formal Profit & Loss Statement following Indian Ind AS format. Sections: Revenue → COGS → Gross Profit → Operating Expenses → EBITDA → Depreciation → EBIT → Finance Costs → PBT → Tax → PAT. Use pre-calculated totals exactly. Add key ratios: gross margin %, operating margin %, net margin %, EBITDA margin %.',
+        `Business: ${document.getElementById('pl-biz').value || 'Business'} | Period: ${document.getElementById('pl-from').value} to ${document.getElementById('pl-to').value}\nRevenue: Sales ₹${r1.toLocaleString('en-IN')}, Other Op ₹${r2.toLocaleString('en-IN')}, Non-op ₹${r3.toLocaleString('en-IN')}, Total ₹${totalRev.toLocaleString('en-IN')}\nCOGS: ₹${cogs.toLocaleString('en-IN')} | Gross Profit: ₹${grossProfit.toLocaleString('en-IN')}\nOp Expenses: Salaries ₹${sal.toLocaleString('en-IN')}, Rent ₹${rent.toLocaleString('en-IN')}, Mktg ₹${mkt.toLocaleString('en-IN')}, Prof Fees ₹${prof.toLocaleString('en-IN')}, Other ₹${oth.toLocaleString('en-IN')}\nEBITDA: ₹${ebitda.toLocaleString('en-IN')} | Depreciation: ₹${dep.toLocaleString('en-IN')} | EBIT: ₹${ebit.toLocaleString('en-IN')} | Finance: ₹${fin.toLocaleString('en-IN')} | PBT: ₹${pbt.toLocaleString('en-IN')} | Tax: ₹${tax.toLocaleString('en-IN')} | PAT: ₹${pat.toLocaleString('en-IN')}`
+      );
+      showResult('pl-out', text);
+    } catch (e) { showError('pl-out', e.message); }
+  },
+
+  async genPLLedger() {
+    if (!txns.length) { alert('Add transactions to the ledger first (Dashboard tab).'); return; }
+    const inc = txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amt, 0);
+    const exp = txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amt, 0);
+    const summary = txns.reduce((acc, t) => { if (!acc[t.cat]) acc[t.cat] = { type: t.type, total: 0 }; acc[t.cat].total += t.amt; return acc; }, {});
+    const rows = Object.entries(summary).map(([k, v]) => `${k} (${v.type}): ₹${Math.round(v.total).toLocaleString('en-IN')}`).join('\n');
+    showLoading('pl-out', 'Auto-generating P&L from your ledger...');
+    try {
+      const text = await callClaude(
+        'Generate a formal P&L Statement from this ledger summary. Classify correctly into Revenue → Gross Profit → EBITDA → EBIT → PBT → PAT. Calculate all financial ratios.',
+        `Ledger:\n${rows}\n\nTotal Income: ${fmt(inc)} | Total Expenses: ${fmt(exp)} | Net: ${fmt(inc - exp)}`
+      );
+      showResult('pl-out', text);
+    } catch (e) { showError('pl-out', e.message); }
+  },
+
+  async genBS() {
+    const cash = gv('bs-cash'), ar = gv('bs-ar'), inv = gv('bs-inv'), fa = gv('bs-fa'), fadep = gv('bs-fadep'), oca = gv('bs-oca');
+    const ap = gv('bs-ap'), stl = gv('bs-stl'), ltl = gv('bs-ltl'), taxp = gv('bs-taxp'), eq = gv('bs-eq'), re = gv('bs-re');
+    const netFA = Math.max(0, fa - fadep);
+    const ta = cash + ar + inv + netFA + oca;
+    const tl = ap + stl + ltl + taxp + eq + re;
+    showLoading('bs-out', 'Generating Balance Sheet with Claude Sonnet 4.6...');
+    try {
+      const text = await callClaude(
+        'You are a senior Indian CA. Generate a formal Balance Sheet as per Indian Companies Act / Ind AS with Schedule references and Current/Non-Current classification. If Assets ≠ Liabilities + Equity, flag the discrepancy and suggest the specific rectification journal entry. Include: current ratio, quick ratio, debt-to-equity, net working capital.',
+        `Business: ${document.getElementById('bs-biz').value || 'Business'} | As at: ${document.getElementById('bs-date').value}\nASSETS: Cash ₹${cash.toLocaleString('en-IN')}, AR ₹${ar.toLocaleString('en-IN')}, Inventory ₹${inv.toLocaleString('en-IN')}, FA (gross) ₹${fa.toLocaleString('en-IN')}, Less Dep ₹${fadep.toLocaleString('en-IN')}, Net FA ₹${netFA.toLocaleString('en-IN')}, Other CA ₹${oca.toLocaleString('en-IN')} | TOTAL ASSETS: ₹${ta.toLocaleString('en-IN')}\nLIABILITIES: AP ₹${ap.toLocaleString('en-IN')}, ST Loans ₹${stl.toLocaleString('en-IN')}, LT Loans ₹${ltl.toLocaleString('en-IN')}, Tax Payable ₹${taxp.toLocaleString('en-IN')}, Equity ₹${eq.toLocaleString('en-IN')}, Retained ₹${re.toLocaleString('en-IN')} | TOTAL L+E: ₹${tl.toLocaleString('en-IN')}\nDifference: ₹${Math.abs(ta - tl).toLocaleString('en-IN')}`
+      );
+      showResult('bs-out', text);
+    } catch (e) { showError('bs-out', e.message); }
+  },
+
+  async analyseBank() {
+    const stmt = document.getElementById('bk-data').value.trim();
+    if (!stmt) { alert('Paste your bank statement first.'); return; }
+    const openBal = parseFloat(document.getElementById('bk-open').value) || 0;
+    showLoading('bk-out', 'Parsing and reconciling bank statement with Claude Sonnet 4.6...');
+    try {
+      const text = await callClaude(
+        'You are a senior Indian CA specialising in bank reconciliation and forensic accounting. Analyse the raw bank statement: 1) Parse every transaction into a clean table (Date | Description | Category | Dr/Cr | Amount | Balance) 2) Categorise each transaction 3) Flag ALL anomalies: exact duplicates, suspicious transfers, unknown beneficiaries, timing gaps 4) Reconcile opening → closing balance with arithmetic 5) Identify discrepancies 6) Generate rectification double-entry journal entries for all errors 7) List transactions needing supporting vouchers. Indian banking context.',
+        `Bank: ${document.getElementById('bk-name').value || 'Bank'} | Period: ${document.getElementById('bk-period').value} | Opening Balance: ₹${openBal.toLocaleString('en-IN')}\n\nSTATEMENT:\n${stmt}`
+      );
+      showResult('bk-out', text);
+    } catch (e) { showError('bk-out', e.message); }
+  },
+
+  async reconcileOnly() {
+    const stmt = document.getElementById('bk-data').value.trim();
+    if (!stmt) { alert('Paste your bank statement first.'); return; }
+    const openBal = parseFloat(document.getElementById('bk-open').value) || 0;
+    showLoading('bk-out', 'Running reconciliation...');
+    try {
+      const text = await callClaude(
+        'Perform bank reconciliation only. Extract all debit and credit amounts, calculate: Opening Balance + Total Credits - Total Debits = Expected Closing Balance. Compare with stated closing balance. Show arithmetic clearly. Flag any discrepancy with suggested correction entry.',
+        `Opening Balance: ₹${openBal.toLocaleString('en-IN')}\n\nStatement:\n${stmt}`
+      );
+      showResult('bk-out', text);
+    } catch (e) { showError('bk-out', e.message); }
+  },
+
+  async genGST() {
+    const turn = gv('g-turn'), outGST = gv('g-out'), itc = gv('g-itc');
+    const netGST = Math.max(0, outGST - itc);
+    showLoading('g-out', 'Generating return data + portal guide with Claude Sonnet 4.6...');
+    try {
+      const text = await callClaude(
+        'You are an expert Indian CA and GST consultant. Generate complete return data for the selected return type with all mandatory fields. Include: full calculation workings, ITC eligibility analysis, net GST payable after ITC set-off, interest/late fee if applicable, step-by-step guide to upload on gst.gov.in portal, and which specific sections to fill.',
+        `Business: ${document.getElementById('g-biz').value || 'Business'} | GSTIN: ${document.getElementById('g-gst').value || 'N/A'} | PAN: ${document.getElementById('g-pan').value || 'N/A'} | Type: ${document.getElementById('g-btype').value}\nReturn: ${document.getElementById('g-rtype').value} | Period: ${document.getElementById('g-period').value}\nTurnover: ₹${turn.toLocaleString('en-IN')} | Output GST: ₹${outGST.toLocaleString('en-IN')} | ITC: ₹${itc.toLocaleString('en-IN')} | Net GST Payable: ₹${netGST.toLocaleString('en-IN')}\nNet Taxable Income: ₹${gv('g-inc').toLocaleString('en-IN')} | TDS: ₹${gv('g-tds').toLocaleString('en-IN')} | Advance Tax: ₹${gv('g-adv').toLocaleString('en-IN')}\nDeductions: ${document.getElementById('g-ded').value || 'None'}`
+      );
+      showResult('g-out', text);
+    } catch (e) { showError('g-out', e.message); }
+  },
+
+  async genITR() {
+    showLoading('g-out', 'Computing ITR schedule with Claude Sonnet 4.6...');
+    try {
+      const text = await callClaude(
+        'You are an expert Indian tax consultant. Generate a complete ITR filing summary: 1) Correct ITR form with reason 2) Schedule-wise income computation 3) Eligible deductions applied 4) Tax computation with surcharge and 4% health & education cess 5) Tax payable/refundable after TDS and advance tax 6) Step-by-step guide to file on incometax.gov.in 7) Key deadlines and penalties. Use AY 2025-26 tax slabs.',
+        `Business: ${document.getElementById('g-biz').value || 'Business'} | PAN: ${document.getElementById('g-pan').value || 'N/A'} | Type: ${document.getElementById('g-btype').value} | Period: ${document.getElementById('g-period').value}\nNet Taxable Income: ₹${gv('g-inc').toLocaleString('en-IN')} | TDS: ₹${gv('g-tds').toLocaleString('en-IN')} | Advance Tax: ₹${gv('g-adv').toLocaleString('en-IN')}\nDeductions: ${document.getElementById('g-ded').value || 'None'}`
+      );
+      showResult('g-out', text);
+    } catch (e) { showError('g-out', e.message); }
+  },
+
+  async genOutreach() {
+    outreachHist = [];
+    const userMsg = `Generate the first outreach message:\nName: ${document.getElementById('o-name').value || 'Lead'}\nType: ${document.getElementById('o-type').value}\nLocation: ${document.getElementById('o-loc').value || 'their area'}\nBudget: ${document.getElementById('o-budget').value || 'flexible'}\nProperty: ${document.getElementById('o-prop').value}\nSource: ${document.getElementById('o-source').value}\nPrevious contact: ${document.getElementById('o-prev').value}\nNotes: ${document.getElementById('o-notes').value || 'None'}`;
+    outreachHist.push({ role: 'user', content: userMsg });
+    const el = showLoading('o-out', 'Alex is crafting your outreach message...');
+    try {
+      const sys = 'You are Alex, a professional real estate outreach agent — warm, confident, never pushy. Sound like a trusted advisor, not a salesperson. OUTPUT FORMAT (always use exactly): --- MESSAGE TO SEND --- [max 120 words, never start with "Hi I am Alex", no generic openers, sound human]\n--- CRM NOTE ---\n[one-line summary]\n--- LEAD STATUS ---\n[HOT/WARM/COLD/BOOKED/DNC]\n--- NEXT ACTION ---\n[what to do + date]';
+      const text = await callClaude(sys, userMsg);
+      showResult('o-out', text);
+      outreachHist.push({ role: 'assistant', content: text });
+      document.getElementById('o-reply-card').style.display = 'block';
+    } catch (e) { showError('o-out', e.message); }
+  },
+
+  async handleReply() {
+    const reply = document.getElementById('o-reply').value.trim();
+    if (!reply) { alert('Paste the lead\'s reply first.'); return; }
+    const msg = `The lead replied: "${reply}"\n\nClassify their response and generate the perfect follow-up in the standard output format.`;
+    outreachHist.push({ role: 'user', content: msg });
+    const sys = 'You are Alex, a professional real estate outreach agent. OUTPUT FORMAT: --- MESSAGE TO SEND --- [ready to send]\n--- CRM NOTE ---\n--- LEAD STATUS ---\n[HOT/WARM/COLD/BOOKED/DNC]\n--- NEXT ACTION ---';
+    showLoading('o-out', 'Alex is crafting your follow-up...');
+    try {
+      const text = await callClaude(sys, msg, outreachHist.slice(0, -1));
+      showResult('o-out', text);
+      outreachHist.push({ role: 'assistant', content: text });
+      document.getElementById('o-reply').value = '';
+    } catch (e) { showError('o-out', e.message); }
+  },
+
+  async chat() {
+    const inp = document.getElementById('c-in');
+    const msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = '';
+    addMsg(msg, 'user');
+    chatHist.push({ role: 'user', content: msg });
+    const div = addMsg('', 'agent');
+    div.innerHTML = '<span class="spinner"></span>Thinking...';
+    try {
+      const sys = 'You are a senior Indian Chartered Accountant AI with deep expertise in: GST law, Income Tax Act, Companies Act 2013, TDS, bookkeeping, Ind AS, bank reconciliation, financial statements, ROC compliance, and startup taxation. Give precise, practical advice with relevant section numbers and rule references. For genuinely complex matters, advise consulting a practicing CA. Always respond in the context of Indian law and ICAI standards. Be concise and actionable.';
+      const text = await callClaude(sys, msg, chatHist.slice(0, -1));
+      div.textContent = text;
+      chatHist.push({ role: 'assistant', content: text });
+    } catch (e) { div.textContent = 'Error: ' + e.message; chatHist.pop(); }
+  }
+};
+
+function addMsg(text, role) {
+  const w = document.getElementById('chat-wrap');
+  const d = document.createElement('div');
+  d.className = 'cmsg ' + role;
+  d.textContent = text;
+  w.appendChild(d);
+  w.scrollTop = w.scrollHeight;
+  return d;
+}
+
+function qc(text) { document.getElementById('c-in').value = text; aiCall('chat'); }
+
+// ── INIT ──────────────────────────────────────
+const today = new Date().toISOString().split('T')[0];
+['t-date', 'i-date', 'bs-date'].forEach(id => { const el = document.getElementById(id); if (el) el.value = today; });
+const due30 = new Date(); due30.setDate(due30.getDate() + 30);
+const dueEl = document.getElementById('i-due'); if (dueEl) dueEl.value = due30.toISOString().split('T')[0];
+const fy = new Date(); fy.setMonth(3); fy.setDate(1); if (fy > new Date()) fy.setFullYear(fy.getFullYear() - 1);
+const pfrom = document.getElementById('pl-from'); if (pfrom) pfrom.value = fy.toISOString().split('T')[0];
+const pto = document.getElementById('pl-to'); if (pto) pto.value = today;
+
+loadKey();
+</script>
+</body>
+</html>
+JSEOF
+echo "Done"
